@@ -37,15 +37,17 @@ public class DonationController {
 
     // BD-01a: Register Donor[cite: 3]
     @PostMapping("/donors")
-    public ResponseEntity<Donor> registerDonor(@RequestBody Donor donor) {
+    public ResponseEntity<?> registerDonor(@RequestBody Donor donor) {
 
         try {
             // Saves the donor along with their newly mapped password
             Donor newDonor = donorRepository.save(donor);
             return ResponseEntity.ok(newDonor);
         } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error saving donor: " + e.getMessage());
             // Returns 409 Conflict if the email already exists in the database
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 
@@ -138,7 +140,7 @@ public class DonationController {
     private com.anish.blooddonation.repository.DonationRecordRepository donationRecordRepository;
 
     @PostMapping("/requesters")
-    public ResponseEntity<Requester> registerRequester(@RequestBody Requester requester) {
+    public ResponseEntity<?> registerRequester(@RequestBody Requester requester) {
 
         // Ensure the account type matches exactly what AuthController expects for login
         requester.setAccountType("hospital_verified");
@@ -147,8 +149,10 @@ public class DonationController {
             Requester newRequester = requesterRepository.save(requester);
             return ResponseEntity.ok(newRequester);
         } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error saving requester: " + e.getMessage());
             // Returns 409 Conflict if email is already taken
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 
