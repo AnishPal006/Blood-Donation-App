@@ -40,6 +40,11 @@ public class DonationController {
     public ResponseEntity<?> registerDonor(@RequestBody Donor donor) {
 
         try {
+            // Set a dummy password for Google OAuth users to satisfy DB constraints
+            if (donor.getPassword() == null || donor.getPassword().isEmpty()) {
+                donor.setPassword("google_oauth_user_" + java.util.UUID.randomUUID().toString().substring(0, 8));
+            }
+            
             // Saves the donor along with their newly mapped password
             Donor newDonor = donorRepository.save(donor);
             return ResponseEntity.ok(newDonor);
@@ -146,6 +151,9 @@ public class DonationController {
         requester.setAccountType("hospital_verified");
 
         try {
+            if (requester.getPassword() == null || requester.getPassword().isEmpty()) {
+                requester.setPassword("google_oauth_hospital_" + java.util.UUID.randomUUID().toString().substring(0, 8));
+            }
             Requester newRequester = requesterRepository.save(requester);
             return ResponseEntity.ok(newRequester);
         } catch (Exception e) {
