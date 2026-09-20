@@ -263,17 +263,16 @@ public class DonationController {
 
         // Fire real-time achievement notification to the donor's dashboard
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             java.util.Map<String, Object> achievement = new java.util.HashMap<>();
             achievement.put("type", "DONATION_COMPLETED");
             achievement.put("donorName", donor.getName());
             achievement.put("bloodType", donor.getBloodType());
-            achievement.put("units", request.getUnitsRequired() != null ? request.getUnitsRequired() : 1);
+            achievement.put("units", request.getUnitsNeeded() != null ? request.getUnitsNeeded() : 1);
             achievement.put("totalDonations", donor.getDonationCount());
             
             messagingTemplate.convertAndSend(
                     "/topic/donors/" + donor.getDonorId() + "/achievements",
-                    mapper.writeValueAsString(achievement)
+                    (Object) achievement
             );
         } catch (Exception e) {
             e.printStackTrace();
