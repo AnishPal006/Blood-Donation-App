@@ -36,7 +36,7 @@ public class TrackingSimulationService {
                 payload.put("etaMinutes", etaMinutes);
                 payload.put("progress", (int) ((i / (double) steps) * 100));
 
-                messagingTemplate.convertAndSend("/topic/tracking/" + requestId, payload);
+                messagingTemplate.convertAndSend("/topic/tracking/" + requestId, (Object) payload);
 
                 if (i < steps) {
                     Thread.sleep(sleepInterval);
@@ -48,3 +48,4 @@ public class TrackingSimulationService {
         }
     }
 }
+
