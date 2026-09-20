@@ -160,6 +160,16 @@ public class DonationController {
             Double hospLat = request.getLatitude();
             Double hospLng = request.getLongitude();
             
+            // FALLBACK COORDINATES (If donor or request doesn't have GPS enabled, mock it so the map still works)
+            if (donorLat == null || donorLng == null) {
+                donorLat = 22.9868;
+                donorLng = 88.4314;
+            }
+            if (hospLat == null || hospLng == null) {
+                hospLat = 22.9723;
+                hospLng = 88.4342;
+            }
+            
             // Haversine formula to calculate distance
             double distanceKm = 0.0;
             if (donorLat != null && donorLng != null && hospLat != null && hospLng != null) {
