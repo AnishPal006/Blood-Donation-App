@@ -17,10 +17,19 @@ import org.springframework.cache.annotation.CacheEvict;
 import java.util.List;
 import java.util.Optional;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*") // Allows your frontend to talk to the backend
 public class DonationController {
+
+    private final Counter bloodRequestCounter;
+
+    public DonationController(MeterRegistry registry) {
+        this.bloodRequestCounter = registry.counter("emergency_blood_requests_total");
+    }
 
     @Autowired
     private DonorRepository donorRepository;
@@ -84,6 +93,7 @@ public class DonationController {
     @PostMapping("/requests")
     @CacheEvict(value = {"adminAnalytics", "hospitalAnalytics"}, allEntries = true)
     public ResponseEntity<BloodRequest> createRequest(@RequestBody BloodRequest request) {
+        bloodRequestCounter.increment();
         BloodRequest savedRequest = requestRepository.save(request);
 
         // Trigger the asynchronous matching and notification engine
