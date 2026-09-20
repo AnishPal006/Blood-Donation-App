@@ -262,10 +262,22 @@ public class DonationController {
         donorRepository.save(donor);
 
         // Fire real-time achievement notification to the donor's dashboard
-        messagingTemplate.convertAndSend(
-                "/topic/donors/" + donor.getDonorId() + "/achievements",
-                "{\"type\": \"DONATION_COMPLETED\", \"donorName\": \"" + donor.getName() + "\", \"bloodType\": \"" + donor.getBloodType() + "\", \"units\": " + request.getUnitsRequired() + ", \"totalDonations\": " + donor.getDonationCount() + "}"
-        );
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, Object> achievement = new java.util.HashMap<>();
+            achievement.put("type", "DONATION_COMPLETED");
+            achievement.put("donorName", donor.getName());
+            achievement.put("bloodType", donor.getBloodType());
+            achievement.put("units", request.getUnitsRequired() != null ? request.getUnitsRequired() : 1);
+            achievement.put("totalDonations", donor.getDonationCount());
+            
+            messagingTemplate.convertAndSend(
+                    "/topic/donors/" + donor.getDonorId() + "/achievements",
+                    mapper.writeValueAsString(achievement)
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return ResponseEntity.ok(record);
     }
