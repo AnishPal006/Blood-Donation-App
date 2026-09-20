@@ -137,42 +137,54 @@ public class DonationController {
             request.setStatus("matched");
             requestRepository.save(request);
 
-            // 1. Look up the real donor in the database to get their name
+            // 1. Look up the real donor in the database to get their name and coordinates
             String realDonorName = "A Donor";
+            Double donorLat = null;
+            Double donorLng = null;
+            
             if (donorIdString != null) {
                 try {
                     Long donorId = Long.parseLong(donorIdString);
-                    Optional<Donor> donor = donorRepository.findById(donorId);
-                    if (donor.isPresent()) {
-                        realDonorName = donor.get().getName();
+                    Optional<Donor> donorOpt = donorRepository.findById(donorId);
+                    if (donorOpt.isPresent()) {
+                        Donor donor = donorOpt.get();
+                        realDonorName = donor.getName();
+                        donorLat = donor.getLatitude();
+                        donorLng = donor.getLongitude();
                     }
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid donor ID format");
                 }
             }
 
-            // 2. Fire real-time update to the hospital's dashboard including the real name
+            Double hospLat = request.getLatitude();
+            Double hospLng = request.getLongitude();
+            
+            // Haversine formula to calculate distance
+            double distanceKm = 0.0;
+            if (donorLat != null && donorLng != null && hospLat != null && hospLng != null) {
+                int r = 6371; // Earth radius in km
+                double latDistance = Math.toRadians(hospLat - donorLat);
+                double lonDistance = Math.toRadians(hospLng - donorLng);
+                double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                        + Math.cos(Math.toRadians(donorLat)) * Math.cos(Math.toRadians(hospLat))
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                distanceKm = Math.round((r * c) * 10.0) / 10.0; // round to 1 decimal
+            }
+
+            // 2. Fire real-time update to the hospital's dashboard
             messagingTemplate.convertAndSend(
                     "/topic/requests/" + request.getRequester().getRequesterId(),
-                    "{\"requestId\": " + requestId + ", \"status\": \"matched\", \"donorName\": \"" + realDonorName + "\", \"donorId\": " + payload.get("donorId") + "}"
+                    "{\"requestId\": " + requestId + 
+                    ", \"status\": \"matched\"" +
+                    ", \"donorName\": \"" + realDonorName + "\"" +
+                    ", \"donorId\": " + payload.get("donorId") + 
+                    (donorLat != null ? ", \"donorLat\": " + donorLat + ", \"donorLng\": " + donorLng : "") +
+                    (hospLat != null ? ", \"hospLat\": " + hospLat + ", \"hospLng\": " + hospLng : "") +
+                    ", \"distanceKm\": " + distanceKm +
+                    "}"
             );
-
-            // 3. Start real-time GPS tracking simulation
-            if (donorIdString != null && request.getLatitude() != null && request.getLongitude() != null) {
-                try {
-                    Long donorId = Long.parseLong(donorIdString);
-                    Optional<Donor> donor = donorRepository.findById(donorId);
-                    if (donor.isPresent() && donor.get().getLatitude() != null && donor.get().getLongitude() != null) {
-                        trackingSimulationService.startTracking(
-                                requestId,
-                                donor.get().getLatitude(), donor.get().getLongitude(),
-                                request.getLatitude(), request.getLongitude()
-                        );
-                    }
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
         }
 
 
