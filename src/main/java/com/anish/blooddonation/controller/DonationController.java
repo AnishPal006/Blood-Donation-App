@@ -261,6 +261,12 @@ public class DonationController {
         
         donorRepository.save(donor);
 
+        // Fire real-time achievement notification to the donor's dashboard
+        messagingTemplate.convertAndSend(
+                "/topic/donors/" + donor.getDonorId() + "/achievements",
+                "{\"type\": \"DONATION_COMPLETED\", \"donorName\": \"" + donor.getName() + "\", \"bloodType\": \"" + donor.getBloodType() + "\", \"units\": " + request.getUnitsRequired() + ", \"totalDonations\": " + donor.getDonationCount() + "}"
+        );
+
         return ResponseEntity.ok(record);
     }
 
