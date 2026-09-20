@@ -15,6 +15,13 @@ import java.time.Duration;
 public class RedisConfig {
 
     @Bean
+    public org.springframework.cache.CacheManager cacheManager(org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory) {
+        return org.springframework.data.redis.cache.RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(cacheConfiguration())
+                .build();
+    }
+
+    @Bean
     public RedisCacheConfiguration cacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
