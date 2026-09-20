@@ -33,6 +33,8 @@ public class TrackingSimulationService {
                 payload.put("type", "LOCATION_UPDATE");
                 payload.put("latitude", currentLat);
                 payload.put("longitude", currentLng);
+                payload.put("hospLat", hospLat);
+                payload.put("hospLng", hospLng);
                 payload.put("etaMinutes", etaMinutes);
                 payload.put("progress", (int) ((i / (double) steps) * 100));
 
