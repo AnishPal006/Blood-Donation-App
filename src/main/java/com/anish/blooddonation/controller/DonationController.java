@@ -47,6 +47,9 @@ public class DonationController {
     private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     @Autowired
+    private com.anish.blooddonation.service.TrackingSimulationService trackingSimulationService;
+
+    @Autowired
     private RequesterRepository requesterRepository;
 
     // BD-01a: Register Donor[cite: 3]
@@ -153,7 +156,25 @@ public class DonationController {
                     "/topic/requests/" + request.getRequester().getRequesterId(),
                     "{\"requestId\": " + requestId + ", \"status\": \"matched\", \"donorName\": \"" + realDonorName + "\", \"donorId\": " + payload.get("donorId") + "}"
             );
+
+            // 3. Start real-time GPS tracking simulation
+            if (donorIdString != null && request.getLatitude() != null && request.getLongitude() != null) {
+                try {
+                    Long donorId = Long.parseLong(donorIdString);
+                    Optional<Donor> donor = donorRepository.findById(donorId);
+                    if (donor.isPresent() && donor.get().getLatitude() != null && donor.get().getLongitude() != null) {
+                        trackingSimulationService.startTracking(
+                                requestId,
+                                donor.get().getLatitude(), donor.get().getLongitude(),
+                                request.getLatitude(), request.getLongitude()
+                        );
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
         }
+
 
         return ResponseEntity.ok(request);
     }
