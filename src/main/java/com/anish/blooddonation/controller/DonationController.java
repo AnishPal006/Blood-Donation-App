@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.anish.blooddonation.service.KafkaProducerService;
 import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.List;
@@ -29,6 +30,9 @@ public class DonationController {
 
     @Autowired
     private MatchingService matchingService;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
@@ -83,7 +87,7 @@ public class DonationController {
         BloodRequest savedRequest = requestRepository.save(request);
 
         // Trigger the asynchronous matching and notification engine
-        matchingService.processNewRequest(savedRequest);
+        kafkaProducerService.publishBloodRequestEvent(savedRequest.getRequestId());
 
         return new ResponseEntity<>(savedRequest, HttpStatus.CREATED);
     }
